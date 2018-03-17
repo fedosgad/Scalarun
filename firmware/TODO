@@ -1,0 +1,10 @@
+File for TODO's, general thoughts and notes on development.
+
+TODO:
+	1. Add level shifter between Atmega and SI module
+
+Thoughts:
+
+
+Notes:
+	Atmega328PA doesn't run 16MHz on 3.3V (according to datasheet) (see TODO 1.)
