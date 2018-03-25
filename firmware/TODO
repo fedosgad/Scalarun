@@ -8,3 +8,8 @@ Thoughts:
 
 Notes:
 	Atmega328PA doesn't run 16MHz on 3.3V (according to datasheet) (see TODO 1.)
+
+	The EZRadioPRO devices can be set to provide an unmodulated carrier
+	signal for test purposes by setting the “modtyp[1:0]” bits to 0
+	(bit[1:0] in the Modulation mode Control2 register).
+	Silicon Labs AN415, p. 13

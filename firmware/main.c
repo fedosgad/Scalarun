@@ -2,15 +2,15 @@
 #include <avr/io.h>
 #include <avr/interrupt.h>
 
-#define CS_DDR DDRB
-#define CS_PORT PORTB	//si4432 CS pin config
+#define SPI_DDR DDRB
+#define SPI_PORT PORTB	//si4432 CS, SCK & MOSI pin config
 #define CS_PIN 2
+#define MOSI_PIN 3
+#define SCK_PIN 5
 
 /*command codes for atmega*/
 #define ACK 0xAA
 #define NAK 0xCC
-#define RDY 0xDD
-#define BSY 0xBB
 
 
 enum {ADDR, CHECK_ADDR, NUM, CHECK_NUM, READING,
@@ -78,12 +78,12 @@ ISR(USART_RX_vect) {	//USART data received interrupt
 		break;
 
 	case CHECK_NUM:
-		if(byte_count == UDR0) {
+		if(UDR0 == ACK) {
+			waiting = 0;
 			if(addr & (1<<7))	//if writing
 				state = BYTES_IN;
 			else
 				state = READING;
-			waiting = 0;
 			}
 		else
 			state = RESET;
@@ -102,9 +102,6 @@ ISR(USART_RX_vect) {	//USART data received interrupt
 ISR(USART_UDRE_vect) {	//USART nothing to transmit interrupt
 	switch(state) {
 	case CHECK_ADDR:
-		UCSR0B &= ~(1<<UDRIE0);
-		break;
-
 	case CHECK_NUM:
 		UCSR0B &= ~(1<<UDRIE0);
 		break;
@@ -146,21 +143,23 @@ int main() {
 
 /*hardware init*/
 /*debugging GPIO*/
-	DDRC = 0x03;
+	DDRC = 0x03;		//pins PC0 & PC1 outputs
+	PORTC|= 1;		//initial PC0
 
 /*USART*/
-	UBRR0L = 8;		//baudrate = 115200
+	UBRR0L = 51;		//baudrate = 9600
 	UCSR0B = (1<<RXCIE0)|	//RXC interrupt enabled
 		(1<<RXEN0)|(1<<TXEN0);		//RX/TX enable
 
 /*SPI*/
+	SPI_DDR = (1<<CS_PIN)|(1<<MOSI_PIN)|(1<<SCK_PIN);	//out
+
 	SPCR = (1<<SPE)|(1<<SPIE)|		//SPI & SPI interrupt
 		(1<<MSTR)|			//master mode
 		(0<<CPOL)|(0<<CPHA)|		//clk phase & polarity
 		(1<<SPR1)|(1<<SPR0);		//clk divider = 128
 
-	CS_DDR = (1<<CS_PIN);		//set CS pin output
-	CS_PORT |= (1 << CS_PIN);	//set it HIGH
+	SPI_PORT |= (1 << CS_PIN);	//set CS high
 
 /*all init done*/
 
@@ -186,19 +185,21 @@ int main() {
 
 		case READING:
 			if(first_byte) {
-				CS_PORT &= ~(1 << CS_PIN);	//CS low
+				first_byte = 0;
+				SPI_PORT &= ~(1 << CS_PIN);	//CS low
 				SPDR = addr;
 			}
 			else if(data_out_end < byte_count)
-				SPDR = 0xAA;	//for debugging purposes
+				SPDR = 0x5A;	//for debugging purposes
 			else {
-				CS_PORT |= (1 << CS_PIN);
+				SPI_PORT |= (1 << CS_PIN);
 				state = BYTES_OUT;
 			}
 			break;
 
 		case BYTES_OUT:
 			if(first_byte) {
+				first_byte = 0;
 				UCSR0B |= (1<<UDRIE0);
 			}
 			break;
@@ -210,11 +211,12 @@ int main() {
 
 		case WRITING:
 			if(first_byte) {
-				CS_PORT &= ~(1 << CS_PIN);	//CS low
+				first_byte = 0;
+				SPI_PORT &= ~(1 << CS_PIN);	//CS low
 				SPDR = addr;
 			}
 			if(data_in_begin >= byte_count) {
-				CS_PORT |= (1<<CS_PIN);
+				SPI_PORT |= (1<<CS_PIN);
 				state = RESET;
 			}
 			break;

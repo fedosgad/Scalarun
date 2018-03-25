@@ -1,10 +1,10 @@
 DEVICE      = atmega168p
-CLOCK      = 16000000
+CLOCK      = 8000000
 PROGRAMMER = -c usbasp
 OBJECTS    = main.o
 OPTIMIZATION = -O0
 
-FUSES       = -U lfuse:w:0xf7:m -U hfuse:w:0xdf:m -U efuse:w:0xf9:m
+FUSES       = -U lfuse:w:0xe2:m -U hfuse:w:0xdf:m -U efuse:w:0xf9:m 
 
 
 # Tune the lines below only if you know what you are doing:
