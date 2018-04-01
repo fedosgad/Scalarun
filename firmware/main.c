@@ -10,7 +10,6 @@
 
 /*command codes for atmega*/
 #define ACK 0xAA
-#define NAK 0xCC
 
 
 enum {ADDR, CHECK_ADDR, NUM, CHECK_NUM, READING,
@@ -32,9 +31,10 @@ uint8_t state;
 uint8_t waiting;
 uint8_t first_byte;
 
+volatile uint8_t tmp;
+
 /*interrupt routines*/
 ISR(SPI_STC_vect) {	//SPI end of transmission interrupt
-	PORTC ^= 1;
 	switch(state) {
 	case READING:
 		data_out[data_out_end] = SPDR;
@@ -53,7 +53,6 @@ ISR(SPI_STC_vect) {	//SPI end of transmission interrupt
 
 	}
 
-	PORTC ^= 1;
 }
 
 ISR(USART_RX_vect) {	//USART data received interrupt
@@ -64,9 +63,10 @@ ISR(USART_RX_vect) {	//USART data received interrupt
 		break;
 
 	case CHECK_ADDR:
-		if(UDR0 == ACK) {
+		tmp = UDR0;
+		if(tmp == ACK) {
 			state = NUM;
-			waiting = 0;
+			waiting = 2;
 		}
 		else
 			state = RESET;
@@ -78,12 +78,13 @@ ISR(USART_RX_vect) {	//USART data received interrupt
 		break;
 
 	case CHECK_NUM:
-		if(UDR0 == ACK) {
-			waiting = 0;
+		tmp = UDR0;
+		if((tmp == ACK) && (byte_count != 0)) {
 			if(addr & (1<<7))	//if writing
 				state = BYTES_IN;
 			else
 				state = READING;
+			waiting = 2;
 			}
 		else
 			state = RESET;
@@ -100,15 +101,21 @@ ISR(USART_RX_vect) {	//USART data received interrupt
 }
 
 ISR(USART_UDRE_vect) {	//USART nothing to transmit interrupt
+	PORTC ^= 1;
 	switch(state) {
 	case CHECK_ADDR:
+		UCSR0B &= ~(1<<UDRIE0);
+		//~ UCSR0A &= ~(1<<5);
+		break;
+		
 	case CHECK_NUM:
 		UCSR0B &= ~(1<<UDRIE0);
+		//~ UCSR0A &= ~(1<<5);
 		break;
 
 	case BYTES_OUT:
-		if(first_byte)
-			first_byte = 0;
+		//~ if(first_byte)
+			//~ first_byte = 0;
 		if(data_out_begin < byte_count) {
 			UDR0 = data_out[data_out_begin];
 			data_out_begin++;
@@ -120,9 +127,11 @@ ISR(USART_UDRE_vect) {	//USART nothing to transmit interrupt
 		break;
 
 	default:
+		UCSR0B &= ~(1<<UDRIE0);
 		break;
 
 	}
+	PORTC ^= 1;
 }
 
 
@@ -144,10 +153,10 @@ int main() {
 /*hardware init*/
 /*debugging GPIO*/
 	DDRC = 0x03;		//pins PC0 & PC1 outputs
-	PORTC|= 1;		//initial PC0
+	PORTC|= 3;		//initial PC0
 
 /*USART*/
-	UBRR0L = 51;		//baudrate = 9600
+	UBRR0L = 12;		//baudrate = 38400
 	UCSR0B = (1<<RXCIE0)|	//RXC interrupt enabled
 		(1<<RXEN0)|(1<<TXEN0);		//RX/TX enable
 
@@ -169,21 +178,31 @@ int main() {
 		switch(state) {
 
 		case CHECK_ADDR:
-			if(!waiting) {
-				UDR0 = addr;
-				UCSR0B |= (1<<UDRIE0);	//enable UDRE interrupt
+			PORTC ^= 2;
+			if(waiting == 0) {
 				waiting = 1;
+				UDR0 = addr;
+				//~ UCSR0B |= (1<<UDRIE0);	//enable UDRE interrupt
 			}
+			if(waiting == 2)
+				waiting = 0;	//sudden interrupt defence
+			PORTC ^= 2;
+			break;
 
 		case CHECK_NUM:
-			if(!waiting) {
-				UDR0 = byte_count;
-				UCSR0B |= (1<<UDRIE0);
+			PORTC ^= 2;
+			if(waiting == 0) {
 				waiting = 1;
+				UDR0 = byte_count;
+				//~ UCSR0B |= (1<<UDRIE0);
 			}
+			if(waiting == 2)
+				waiting == 0;
+			PORTC ^= 2;
 			break;
 
 		case READING:
+			
 			if(first_byte) {
 				first_byte = 0;
 				SPI_PORT &= ~(1 << CS_PIN);	//CS low
@@ -193,8 +212,10 @@ int main() {
 				SPDR = 0x5A;	//for debugging purposes
 			else {
 				SPI_PORT |= (1 << CS_PIN);
+				first_byte = 1;
 				state = BYTES_OUT;
 			}
+			
 			break;
 
 		case BYTES_OUT:
