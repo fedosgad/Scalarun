@@ -37,6 +37,10 @@ volatile uint8_t tmp;
 ISR(SPI_STC_vect) {	//SPI end of transmission interrupt
 	switch(state) {
 	case READING:
+		if(first_byte == 2) {
+			first_byte = 0;
+			break;
+		}
 		data_out[data_out_end] = SPDR;
 		data_out_end++;
 		break;
@@ -101,7 +105,7 @@ ISR(USART_RX_vect) {	//USART data received interrupt
 }
 
 ISR(USART_UDRE_vect) {	//USART nothing to transmit interrupt
-	PORTC ^= 1;
+	//~ PORTC ^= 1;
 	switch(state) {
 	case CHECK_ADDR:
 		UCSR0B &= ~(1<<UDRIE0);
@@ -131,24 +135,25 @@ ISR(USART_UDRE_vect) {	//USART nothing to transmit interrupt
 		break;
 
 	}
-	PORTC ^= 1;
+	//~ PORTC ^= 1;
 }
 
 
 int main() {
 
 /*software init*/
-	data_in_end = 0;	//flush buffers
-	data_out_end = 0;
-	data_in_begin = 0;
-	data_out_begin = 0;
+	//~ data_in_end = 0;	//flush buffers
+	//~ data_out_end = 0;
+	//~ data_in_begin = 0;
+	//~ data_out_begin = 0;
 
-	addr = 0;		//zeroing everything (just to be sure)
-	byte_count = 0;
+	//~ addr = 0;		//zeroing everything (just to be sure)
+	//~ byte_count = 0;
+	//~ tmp = 0;
 
-	state = ADDR;
-	waiting = 0;
-	first_byte = 1;
+	state = RESET;		//initial setup
+	//~ waiting = 0;
+	//~ first_byte = 1;
 
 /*hardware init*/
 /*debugging GPIO*/
@@ -178,7 +183,7 @@ int main() {
 		switch(state) {
 
 		case CHECK_ADDR:
-			PORTC ^= 2;
+			//~ PORTC ^= 2;
 			if(waiting == 0) {
 				waiting = 1;
 				UDR0 = addr;
@@ -186,11 +191,11 @@ int main() {
 			}
 			if(waiting == 2)
 				waiting = 0;	//sudden interrupt defence
-			PORTC ^= 2;
+			//~ PORTC ^= 2;
 			break;
 
 		case CHECK_NUM:
-			PORTC ^= 2;
+			//~ PORTC ^= 2;
 			if(waiting == 0) {
 				waiting = 1;
 				UDR0 = byte_count;
@@ -198,20 +203,20 @@ int main() {
 			}
 			if(waiting == 2)
 				waiting == 0;
-			PORTC ^= 2;
+			//~ PORTC ^= 2;
 			break;
 
 		case READING:
 			
-			if(first_byte) {
-				first_byte = 0;
+			if(first_byte == 1) {
+				first_byte = 2;
 				SPI_PORT &= ~(1 << CS_PIN);	//CS low
 				SPDR = addr;
 			}
 			else if(data_out_end < byte_count)
 				SPDR = 0x5A;	//for debugging purposes
 			else {
-				SPI_PORT |= (1 << CS_PIN);
+				SPI_PORT |= (1 << CS_PIN);	//CS high
 				first_byte = 1;
 				state = BYTES_OUT;
 			}
@@ -251,6 +256,7 @@ int main() {
 			data_out_begin = 0;
 			data_out_end = 0;
 			waiting = 0;
+			tmp = 0;
 			first_byte = 1;
 			state = ADDR;
 			break;
