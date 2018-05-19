@@ -14,6 +14,8 @@
 
 #include <mathplot.h>
 
+#include "wx/filedlg.h"
+
 #include <wx/image.h>
 #include <wx/listctrl.h>
 #include <wx/sizer.h>
@@ -55,6 +57,30 @@ private:
     void OnAmplitude(wxCommandEvent& event);
     void OnCalibration(wxCommandEvent& event);
 };
+/*
+BIG WINDOW OF SETTINGS
+        number of samples per point(field)
+        step of frequency(field)
+        type of interpolation(ticks)
+        attenuator(tick with field)
+        beginning and end of frequency(two fields)
+        sample rate(not priority)
+        calibration curve(path to file with memory)
+        number of repeats(field, maybe arrows)
+        name of curve(char field)
+        commentaries(char field)
+*/
+class SettingsFrame : public wxFrame
+{
+public:
+    SettingsFrame();
+    wxRadioBox *attenuatortype, *interpolationtype;
+    wxTextCtrl *samperpoint, *fstep, *attfield, *fmin, *fmax, *rep, *curname, *com;
+    wxString *pathtocurve;
+private:
+    
+};
+
 enum
 {
     ID_DOWN = 1
@@ -95,6 +121,10 @@ enum
 {
     ID_SettingFrame = 10
 };
+enum
+{
+    ID_RADIO_BOX = 11
+};
 mpWindow *plot;
 mpLayer *lay;
 int tangens = 0;
@@ -106,6 +136,7 @@ bool MyApp::OnInit()
     frame->Show(true);
     return true;
 }
+
 MyFrame::MyFrame()
     : wxFrame(NULL, wxID_ANY, "Test app")
 {
@@ -151,15 +182,66 @@ MyFrame::MyFrame()
     Bind(wxEVT_MENU, &MyFrame::OnAmplitude, this, ID_Amplitude);
     Bind(wxEVT_MENU, &MyFrame::OnCalibration, this, ID_Calibration);
 
-
-/*
-    wxBoxSizer *topsizer = new wxBoxSizer( wxVERTICAL );
-    topsizer->Add( plot, 1, wxEXPAND );
-    SetAutoLayout( TRUE );
-    SetSizer( topsizer );
-    */
 }
 
+SettingsFrame::SettingsFrame()
+    : wxFrame(NULL, wxID_ANY, "Settings", wxDefaultPosition, wxSize(500, 500))
+{   
+    wxStaticText *samplesnum = new wxStaticText(this, wxID_STATIC,
+                             wxT("Number of samples per point"),
+                              wxPoint(50, 50), wxSize(100, 50), wxTE_CENTRE);
+    samperpoint = new wxTextCtrl(this, wxID_ANY, "100", wxPoint(50, 100),
+                                wxSize(100, 50), wxTE_CENTRE);
+    wxStaticText *freqstep = new wxStaticText(this, wxID_STATIC,
+                             wxT("Step of frequency"),
+                              wxPoint(50, 150), wxSize(100, 50), wxTE_CENTRE);
+    fstep = new wxTextCtrl(this, wxID_ANY, "100", wxPoint(50, 200),
+                                wxSize(100, 50), wxTE_CENTRE); 
+wxStaticText *attenuator = new wxStaticText(this, wxID_STATIC,
+                             wxT("Attenuator"),
+                              wxPoint(50, 250), wxSize(100, 50), wxTE_CENTRE);
+    attfield = new wxTextCtrl(this, wxID_ANY, "100", wxPoint(50, 300),
+                                wxSize(100, 50), wxTE_CENTRE);
+    wxStaticText *minfreq = new wxStaticText(this, wxID_STATIC,
+                             wxT("Minimum frequency"),
+                              wxPoint(50, 350), wxSize(100, 50), wxTE_CENTRE);
+    fmin  = new wxTextCtrl(this, wxID_ANY, "100", wxPoint(50, 400),
+                                wxSize(100, 50), wxTE_CENTRE);
+    wxStaticText *maxfreq = new wxStaticText(this, wxID_STATIC,
+                             wxT("Maximum frequency"),
+                              wxPoint(250, 50), wxSize(100, 50), wxTE_CENTRE);
+    fmax = new wxTextCtrl(this, wxID_ANY, "100", wxPoint(250, 100),
+                                wxSize(100, 50), wxTE_CENTRE);
+    wxStaticText *repeats = new wxStaticText(this, wxID_STATIC,
+                             wxT("Number of repeats"),
+                              wxPoint(250, 150), wxSize(100, 50), wxTE_CENTRE);
+    rep = new wxTextCtrl(this, wxID_ANY, "100", wxPoint(250, 200),
+                                wxSize(100, 50), wxTE_CENTRE);
+    wxStaticText *curvename = new wxStaticText(this, wxID_STATIC,
+                             wxT("Name of curve"),
+                              wxPoint(250, 250), wxSize(100, 50), wxTE_CENTRE);
+    curname = new wxTextCtrl(this, wxID_ANY, "100", wxPoint(250, 300),
+                                wxSize(100, 50), wxTE_CENTRE);
+    wxStaticText *comments = new wxStaticText(this, wxID_STATIC,
+                             wxT("Commentaries"),
+                              wxPoint(250, 350), wxSize(100, 50), wxTE_CENTRE);
+    com = new wxTextCtrl(this, wxID_ANY, "Lorem ipsum", wxPoint(250, 400),
+                                wxSize(100, 50), wxTE_CENTRE);
+    wxArrayString names, types;
+    names.Add(wxT("ON"));
+    names.Add(wxT("OFF"));
+    types.Add(wxT("Linear"));
+
+    attenuatortype = new wxRadioBox(this, ID_RADIO_BOX, wxT("Attenuator"), wxPoint(450, 250), wxSize(150, 50), names, 1, wxRA_SPECIFY_COLS);
+    interpolationtype = new wxRadioBox(this, ID_RADIO_BOX, wxT("Interpolation types"), wxPoint(450, 50), wxSize(150, 50), types, 1, wxRA_SPECIFY_COLS);
+    wxString caption = wxT("Choose a file");
+    wxString wildcard = wxT("BMP files (*.bmp)|*.bmp|GIF files (*.gif)|*.gif");
+    wxString defaultDir = wxT("~");
+    wxString defaultFilename = wxEmptyString;
+
+    wxFileDialog *setpath = new wxFileDialog(this, caption, defaultDir, defaultFilename, wildcard, wxFD_SAVE);
+    setpath->Show(true);
+}   
 
 void MyFrame::OnExit(wxCommandEvent& event)
 {
@@ -182,7 +264,7 @@ void MyFrame::OnSave(wxCommandEvent& event){
 
 }
 void MyFrame::OnSettings(wxCommandEvent& event){
-    wxFrame* SettingFrame = new wxFrame(this, ID_SettingFrame, wxT("Settings"), wxDefaultPosition, wxSize(500, 500));
+    wxFrame* SettingFrame = new SettingsFrame();
     SettingFrame->Show(true);
 }
 void MyFrame::OnDefautSettings(wxCommandEvent& event){
