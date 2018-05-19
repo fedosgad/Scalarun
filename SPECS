@@ -1,0 +1,14 @@
+Specifications and general TODO
+
+Idea:
+	Hardware:
+	generate sinusoid using (for now) SI4432 (maybe SI4463 later) plus ATMega168
+	as USB-UART-SPI adapter, feed it to the DUT (device under test) and read results
+	using RTL-SDR dongle
+
+	Software:
+	Linux kernel driver for generator, osmocom library for RTL-SDR, software with GUI
+	on GTK/FLTK/wxWidgets (to be decided) 
+	Run without load to read the device's own frequency response, maybe not once and
+	with averaging. Than connect DUT and read again, compensate (subtract the device's
+	frequency response?)
