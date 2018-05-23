@@ -59,19 +59,6 @@ private:
     void OnAmplitude(wxCommandEvent& event);
     void OnCalibration(wxCommandEvent& event);
 };
-/*
-BIG WINDOW OF SETTINGS
-        number of samples per point(field)
-        step of frequency(field)
-        type of interpolation(ticks)
-        attenuator(tick with field)
-        beginning and end of frequency(two fields)
-        sample rate(not priority)
-        calibration curve(path to file with memory)
-        number of repeats(field, maybe arrows)
-        name of curve(char field)
-        commentaries(char field)
-*/
 class SettingsFrame : public wxFrame
 {
 public:
@@ -97,7 +84,15 @@ private:
     void Text5_change(wxCommandEvent& event);
     void Text6_change(wxCommandEvent& event);
 };
-
+class AmplitudeFrame : public wxFrame
+{
+public:
+    AmplitudeFrame();
+    wxTextCtrl *frequency;
+private:
+    void Input_control(wxCommandEvent& event);
+    void Frequency_enter(wxCommandEvent& event);
+};
 enum
 {
     ID_DOWN = 1
@@ -145,6 +140,38 @@ enum
 enum
 {
     ID_Sample = 1
+};
+enum
+{
+    ID_Step = 2
+};
+enum
+{
+    ID_Attenuator = 3
+};
+enum
+{
+    ID_Min = 4
+};
+enum
+{
+    ID_Max = 5
+};
+enum
+{
+    ID_Repeat = 6
+};
+enum
+{
+    ID_Name = 7
+};
+enum
+{
+    ID_Comment = 8
+};
+enum
+{
+    ID_Frequency = 1
 };
 mpWindow *plot;
 mpLayer *lay;
@@ -216,38 +243,38 @@ SettingsFrame::SettingsFrame()
     wxStaticText *freqstep = new wxStaticText(this, wxID_STATIC,
                              wxT("Step of frequency"),
                               wxPoint(50, 150), wxSize(100, 50), wxTE_CENTRE);
-    fstep = new wxTextCtrl(this, wxID_ANY, "100", wxPoint(50, 200),
-                                wxSize(100, 50), wxTE_CENTRE); 
-wxStaticText *attenuator = new wxStaticText(this, wxID_STATIC,
+    fstep = new wxTextCtrl(this, ID_Step, "100", wxPoint(50, 200),
+                                wxSize(100, 50), wxTE_CENTRE | wxTE_PROCESS_ENTER); 
+    wxStaticText *attenuator = new wxStaticText(this, wxID_STATIC,
                              wxT("Attenuator"),
                               wxPoint(50, 250), wxSize(100, 50), wxTE_CENTRE);
-    attfield = new wxTextCtrl(this, wxID_ANY, "100", wxPoint(50, 300),
-                                wxSize(100, 50), wxTE_CENTRE);
+    attfield = new wxTextCtrl(this, ID_Attenuator, "100", wxPoint(50, 300),
+                                wxSize(100, 50), wxTE_CENTRE | wxTE_PROCESS_ENTER);
     wxStaticText *minfreq = new wxStaticText(this, wxID_STATIC,
                              wxT("Minimum frequency"),
                               wxPoint(50, 350), wxSize(100, 50), wxTE_CENTRE);
-    fmin  = new wxTextCtrl(this, wxID_ANY, "100", wxPoint(50, 400),
-                                wxSize(100, 50), wxTE_CENTRE);
+    fmin  = new wxTextCtrl(this, ID_Min, "100", wxPoint(50, 400),
+                                wxSize(100, 50), wxTE_CENTRE | wxTE_PROCESS_ENTER);
     wxStaticText *maxfreq = new wxStaticText(this, wxID_STATIC,
                              wxT("Maximum frequency"),
                               wxPoint(250, 50), wxSize(100, 50), wxTE_CENTRE);
-    fmax = new wxTextCtrl(this, wxID_ANY, "100", wxPoint(250, 100),
-                                wxSize(100, 50), wxTE_CENTRE);
+    fmax = new wxTextCtrl(this, ID_Max, "100", wxPoint(250, 100),
+                                wxSize(100, 50), wxTE_CENTRE | wxTE_PROCESS_ENTER);
     wxStaticText *repeats = new wxStaticText(this, wxID_STATIC,
                              wxT("Number of repeats"),
                               wxPoint(250, 150), wxSize(100, 50), wxTE_CENTRE);
-    rep = new wxTextCtrl(this, wxID_ANY, "100", wxPoint(250, 200),
-                                wxSize(100, 50), wxTE_CENTRE);
+    rep = new wxTextCtrl(this, ID_Repeat, "100", wxPoint(250, 200),
+                                wxSize(100, 50), wxTE_CENTRE | wxTE_PROCESS_ENTER);
     wxStaticText *curvename = new wxStaticText(this, wxID_STATIC,
                              wxT("Name of curve"),
                               wxPoint(250, 250), wxSize(100, 50), wxTE_CENTRE);
-    curname = new wxTextCtrl(this, wxID_ANY, "100", wxPoint(250, 300),
-                                wxSize(100, 50), wxTE_CENTRE);
+    curname = new wxTextCtrl(this, ID_Name, "100", wxPoint(250, 300),
+                                wxSize(100, 50), wxTE_CENTRE | wxTE_PROCESS_ENTER);
     wxStaticText *comments = new wxStaticText(this, wxID_STATIC,
                              wxT("Commentaries"),
                               wxPoint(250, 350), wxSize(100, 50), wxTE_CENTRE);
-    com = new wxTextCtrl(this, wxID_ANY, "Lorem ipsum", wxPoint(250, 400),
-                                wxSize(100, 50), wxTE_CENTRE);
+    com = new wxTextCtrl(this, ID_Comment, "Lorem ipsum", wxPoint(250, 400),
+                                wxSize(100, 50), wxTE_CENTRE | wxTE_PROCESS_ENTER);
     wxArrayString names, types;
     names.Add(wxT("ON"));
     names.Add(wxT("OFF"));
@@ -266,10 +293,32 @@ wxStaticText *attenuator = new wxStaticText(this, wxID_STATIC,
     */
     Bind(wxEVT_TEXT_ENTER, &SettingsFrame::Sample_enter, this, ID_Sample);
     Bind(wxEVT_TEXT, &SettingsFrame::Text1_change, this, ID_Sample);
-
+    Bind(wxEVT_TEXT_ENTER, &SettingsFrame::Step_enter, this, ID_Step);
+    Bind(wxEVT_TEXT, &SettingsFrame::Text2_change, this, ID_Step);
+    Bind(wxEVT_TEXT_ENTER, &SettingsFrame::Attenuator_enter, this, ID_Attenuator);
+    Bind(wxEVT_TEXT, &SettingsFrame::Text3_change, this, ID_Attenuator);
+    Bind(wxEVT_TEXT_ENTER, &SettingsFrame::Min_freq_enter, this, ID_Min);
+    Bind(wxEVT_TEXT, &SettingsFrame::Text4_change, this, ID_Min);
+    Bind(wxEVT_TEXT_ENTER, &SettingsFrame::Max_freq_enter, this, ID_Max);
+    Bind(wxEVT_TEXT, &SettingsFrame::Text5_change, this, ID_Max);
+    Bind(wxEVT_TEXT_ENTER, &SettingsFrame::Repeat_enter, this, ID_Repeat);
+    Bind(wxEVT_TEXT, &SettingsFrame::Text6_change, this, ID_Repeat);
+    Bind(wxEVT_TEXT_ENTER, &SettingsFrame::Name_enter, this, ID_Name);
+    Bind(wxEVT_TEXT_ENTER, &SettingsFrame::Commentary_enter, this, ID_Comment);
 
 }   
-
+AmplitudeFrame::AmplitudeFrame()
+   : wxFrame(NULL, wxID_ANY, "Amplitude")
+   {
+    wxStaticText *freqtitle = new wxStaticText(this, wxID_STATIC,
+                             wxT("Enter amplitude"),
+                              wxPoint(50, 50), wxSize(100, 50), wxTE_CENTRE);
+    frequency = new wxTextCtrl(this, ID_Frequency, "100", wxPoint(50, 100),
+                                wxSize(100, 50), wxTE_CENTRE | wxTE_PROCESS_ENTER);
+    Bind(wxEVT_TEXT_ENTER, &AmplitudeFrame::Frequency_enter, this, ID_Frequency);
+    Bind(wxEVT_TEXT, &AmplitudeFrame::Input_control, this, ID_Frequency);
+    
+   }
 void MyFrame::OnExit(wxCommandEvent& event)
 {
     Close(true);
@@ -285,10 +334,22 @@ void MyFrame::OnButtonDOWN(wxCommandEvent& event){
     plot->AddLayer(lay = new FX(tangens));
 }
 void MyFrame::OnOpen(wxCommandEvent& event){
-
+    wxString caption = wxT("Choose a file");
+    wxString wildcard = wxT("BMP files (*.bmp)|*.bmp|GIF files (*.gif)|*.gif");
+    wxString defaultDir = wxT("~");
+    wxString defaultFilename = wxEmptyString;
+    //wxButton *filedialog = new wxButton(this, ID_ON_DIALOG, wxT("Choose save path"), wxPoint(450, 400), wxSize(100, 50));
+    wxFileDialog *setpath = new wxFileDialog(this, caption, defaultDir, defaultFilename, wildcard, wxFD_OPEN);
+    setpath->Show(true);
 }
 void MyFrame::OnSave(wxCommandEvent& event){
-
+    wxString caption = wxT("Choose a file");
+    wxString wildcard = wxT("BMP files (*.bmp)|*.bmp|GIF files (*.gif)|*.gif");
+    wxString defaultDir = wxT("~");
+    wxString defaultFilename = wxEmptyString;
+    //wxButton *filedialog = new wxButton(this, ID_ON_DIALOG, wxT("Choose save path"), wxPoint(450, 400), wxSize(100, 50));
+    wxFileDialog *setpath = new wxFileDialog(this, caption, defaultDir, defaultFilename, wildcard, wxFD_SAVE);
+    setpath->Show(true);
 }
 void MyFrame::OnSettings(wxCommandEvent& event){
     wxFrame* SettingFrame = new SettingsFrame();
@@ -301,13 +362,14 @@ void MyFrame::OnGet(wxCommandEvent& event){
 
 }
 void MyFrame::OnAmplitude(wxCommandEvent& event){
-
+    wxFrame* Amplitude = new AmplitudeFrame();
+    Amplitude->Show(true);
 }
 void MyFrame::  OnCalibration(wxCommandEvent& event){
 
 }
 void SettingsFrame::Sample_enter(wxCommandEvent& event){
-    std::cout << "enter" << std::endl;
+    std::cout << "enter sample" << std::endl;
 }
 void SettingsFrame::Text1_change(wxCommandEvent& event){
     wxString temp = samperpoint->GetValue();
@@ -323,20 +385,95 @@ void SettingsFrame::Text1_change(wxCommandEvent& event){
 
 }
 void SettingsFrame::Text2_change(wxCommandEvent& event){
-    std::cout << "chan'ge" << std::endl;
+    wxString temp = fstep->GetValue();
+    std::string input = std::string(temp.mb_str());
+    for (int i = 0; i < input.length(); ++i){
+        if ((input[i] <= 'z') &&(input[i] >= 'A')){
+            fstep->Clear();
+            std::cout << "dolboeb" << std::endl;
+            break;
+        }
+    }
 }
 void SettingsFrame::Text3_change(wxCommandEvent& event){
-    std::cout << "chan'ge" << std::endl;
+    wxString temp = attfield->GetValue();
+    std::string input = std::string(temp.mb_str());
+    for (int i = 0; i < input.length(); ++i){
+        if ((input[i] <= 'z') &&(input[i] >= 'A')){
+            attfield->Clear();
+            std::cout << "dolboeb" << std::endl;
+            break;
+        }
+    }
 }
 void SettingsFrame::Text4_change(wxCommandEvent& event){
-    std::cout << "chan'ge" << std::endl;
+    wxString temp = fmin->GetValue();
+    std::string input = std::string(temp.mb_str());
+    for (int i = 0; i < input.length(); ++i){
+        if ((input[i] <= 'z') &&(input[i] >= 'A')){
+            fmin->Clear();
+            std::cout << "dolboeb" << std::endl;
+            break;
+        }
+    }
 }
 void SettingsFrame::Text5_change(wxCommandEvent& event){
-    std::cout << "chan'ge" << std::endl;
+    wxString temp = fmax->GetValue();
+    std::string input = std::string(temp.mb_str());
+    for (int i = 0; i < input.length(); ++i){
+        if ((input[i] <= 'z') &&(input[i] >= 'A')){
+            fmax->Clear();
+            std::cout << "dolboeb" << std::endl;
+            break;
+        }
+    }
 }
 void SettingsFrame::Text6_change(wxCommandEvent& event){
-    std::cout << "chan'ge" << std::endl;
+    wxString temp = rep->GetValue();
+    std::string input = std::string(temp.mb_str());
+    for (int i = 0; i < input.length(); ++i){
+        if ((input[i] <= 'z') &&(input[i] >= 'A')){
+            rep->Clear();
+            std::cout << "dolboeb" << std::endl;
+            break;
+        }
+    }
 }
+    void SettingsFrame::Step_enter(wxCommandEvent& event){
+        std::cout << "enter step" << std::endl;
+    }
+    void SettingsFrame::Max_freq_enter(wxCommandEvent& event){
+        std::cout << "enter max freq" << std::endl;
+    }
+    void SettingsFrame::Min_freq_enter(wxCommandEvent& event){
+        std::cout << "enter min freq" << std::endl;
+    }
+    void SettingsFrame::Attenuator_enter(wxCommandEvent& event){
+        std::cout << "enter attenuator" << std::endl;
+    }
+    void SettingsFrame::Repeat_enter(wxCommandEvent& event){
+        std::cout << "enter repeat" << std::endl;
+    }
+    void SettingsFrame::Commentary_enter(wxCommandEvent& event){
+        std::cout << "enter commentary" << std::endl;
+    }
+    void SettingsFrame::Name_enter(wxCommandEvent& event){
+        std::cout << "enter name" << std::endl;
+    }
+    void AmplitudeFrame::Input_control(wxCommandEvent& event){
+        wxString temp = frequency->GetValue();
+        std::string input = std::string(temp.mb_str());
+        for (int i = 0; i < input.length(); ++i){
+            if ((input[i] <= 'z') &&(input[i] >= 'A')){
+                frequency->Clear();
+                std::cout << "dolboeb" << std::endl;
+                break;
+            }
+        }
+    }
+    void AmplitudeFrame::Frequency_enter(wxCommandEvent& event){
+        std::cout << "amplitude" << std::endl;
+    }
 /*
 Settings:
     BIG WINDOW OF SETTINGS
