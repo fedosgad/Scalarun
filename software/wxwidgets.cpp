@@ -47,6 +47,7 @@ class MyFrame : public wxFrame
 {
 public:
     MyFrame();
+    wxFrame *SettingFrame = NULL, *Amplitude = NULL;
 private:
     void OnExit(wxCommandEvent& event);
     void OnButtonUP(wxCommandEvent& event);
@@ -186,7 +187,7 @@ bool MyApp::OnInit()
 }
 
 MyFrame::MyFrame()
-    : wxFrame(NULL, wxID_ANY, "Test app")
+    : wxFrame(NULL, wxID_ANY, "Test app", wxPoint(0, 0), wxSize(1500, 800))
 {
     wxMenu *menuFile = new wxMenu;
     menuFile->Append(ID_Open, "&Open response\tCtrl-O");
@@ -233,8 +234,9 @@ MyFrame::MyFrame()
 }
 
 SettingsFrame::SettingsFrame()
-    : wxFrame(NULL, wxID_ANY, "Settings", wxDefaultPosition, wxSize(500, 500))
+    : wxFrame(NULL, wxID_ANY, "Settings", wxDefaultPosition, wxSize(700, 500))
 {   
+    CreateStatusBar();
     wxStaticText *samplesnum = new wxStaticText(this, wxID_STATIC,
                              wxT("Number of samples per point"),
                               wxPoint(50, 50), wxSize(100, 50), wxTE_CENTRE);
@@ -280,7 +282,7 @@ SettingsFrame::SettingsFrame()
     names.Add(wxT("OFF"));
     types.Add(wxT("Linear"));
 
-    attenuatortype = new wxRadioBox(this, ID_RADIO_BOX, wxT("Attenuator"), wxPoint(450, 250), wxSize(150, 50), names, 1, wxRA_SPECIFY_COLS);
+    attenuatortype = new wxRadioBox(this, ID_RADIO_BOX, wxT("Attenuator"), wxPoint(450, 250), wxSize(150, 80), names, 1, wxRA_SPECIFY_COLS);
     interpolationtype = new wxRadioBox(this, ID_RADIO_BOX, wxT("Interpolation types"), wxPoint(450, 50), wxSize(150, 50), types, 1, wxRA_SPECIFY_COLS);
     /*
     wxString caption = wxT("Choose a file");
@@ -315,6 +317,7 @@ AmplitudeFrame::AmplitudeFrame()
                               wxPoint(50, 50), wxSize(100, 50), wxTE_CENTRE);
     frequency = new wxTextCtrl(this, ID_Frequency, "100", wxPoint(50, 100),
                                 wxSize(100, 50), wxTE_CENTRE | wxTE_PROCESS_ENTER);
+    CreateStatusBar();
     Bind(wxEVT_TEXT_ENTER, &AmplitudeFrame::Frequency_enter, this, ID_Frequency);
     Bind(wxEVT_TEXT, &AmplitudeFrame::Input_control, this, ID_Frequency);
     
@@ -322,6 +325,12 @@ AmplitudeFrame::AmplitudeFrame()
 void MyFrame::OnExit(wxCommandEvent& event)
 {
     Close(true);
+    if (Amplitude != NULL){
+        Amplitude->Close(true);
+    }
+    if (SettingFrame != NULL){
+        SettingFrame->Close(true);
+    }
 }
 void MyFrame::OnButtonUP(wxCommandEvent& event){
     tangens+= 1;
@@ -352,7 +361,7 @@ void MyFrame::OnSave(wxCommandEvent& event){
     setpath->Show(true);
 }
 void MyFrame::OnSettings(wxCommandEvent& event){
-    wxFrame* SettingFrame = new SettingsFrame();
+    SettingFrame = new SettingsFrame();
     SettingFrame->Show(true);
 }
 void MyFrame::OnDefautSettings(wxCommandEvent& event){
@@ -362,7 +371,7 @@ void MyFrame::OnGet(wxCommandEvent& event){
 
 }
 void MyFrame::OnAmplitude(wxCommandEvent& event){
-    wxFrame* Amplitude = new AmplitudeFrame();
+    Amplitude = new AmplitudeFrame();
     Amplitude->Show(true);
 }
 void MyFrame::  OnCalibration(wxCommandEvent& event){
@@ -377,8 +386,11 @@ void SettingsFrame::Text1_change(wxCommandEvent& event){
     for (int i = 0; i < input.length(); ++i){
         if ((input[i] <= 'z') &&(input[i] >= 'A')){
             samperpoint->Clear();
-            std::cout << "dolboeb" << std::endl;
+            SetStatusText("Please, enter number");
             break;
+        }
+        else {
+            SetStatusText(" ");
         }
     }
     
@@ -390,8 +402,11 @@ void SettingsFrame::Text2_change(wxCommandEvent& event){
     for (int i = 0; i < input.length(); ++i){
         if ((input[i] <= 'z') &&(input[i] >= 'A')){
             fstep->Clear();
-            std::cout << "dolboeb" << std::endl;
+            SetStatusText("Please, enter number");
             break;
+        }
+        else {
+            SetStatusText(" ");
         }
     }
 }
@@ -401,8 +416,11 @@ void SettingsFrame::Text3_change(wxCommandEvent& event){
     for (int i = 0; i < input.length(); ++i){
         if ((input[i] <= 'z') &&(input[i] >= 'A')){
             attfield->Clear();
-            std::cout << "dolboeb" << std::endl;
+            SetStatusText("Please, enter number");
             break;
+        }
+        else {
+            SetStatusText(" ");
         }
     }
 }
@@ -412,8 +430,11 @@ void SettingsFrame::Text4_change(wxCommandEvent& event){
     for (int i = 0; i < input.length(); ++i){
         if ((input[i] <= 'z') &&(input[i] >= 'A')){
             fmin->Clear();
-            std::cout << "dolboeb" << std::endl;
+            SetStatusText("Please, enter number");
             break;
+        }
+        else {
+            SetStatusText(" ");
         }
     }
 }
@@ -423,8 +444,11 @@ void SettingsFrame::Text5_change(wxCommandEvent& event){
     for (int i = 0; i < input.length(); ++i){
         if ((input[i] <= 'z') &&(input[i] >= 'A')){
             fmax->Clear();
-            std::cout << "dolboeb" << std::endl;
+            SetStatusText("Please, enter number");
             break;
+        }
+        else {
+            SetStatusText(" ");
         }
     }
 }
@@ -434,8 +458,11 @@ void SettingsFrame::Text6_change(wxCommandEvent& event){
     for (int i = 0; i < input.length(); ++i){
         if ((input[i] <= 'z') &&(input[i] >= 'A')){
             rep->Clear();
-            std::cout << "dolboeb" << std::endl;
+            SetStatusText("Please, enter number");
             break;
+        }
+        else {
+            SetStatusText(" ");
         }
     }
 }
@@ -466,8 +493,11 @@ void SettingsFrame::Text6_change(wxCommandEvent& event){
         for (int i = 0; i < input.length(); ++i){
             if ((input[i] <= 'z') &&(input[i] >= 'A')){
                 frequency->Clear();
-                std::cout << "dolboeb" << std::endl;
+                SetStatusText("Please, enter number");
                 break;
+            }
+            else {
+                SetStatusText(" ");
             }
         }
     }
