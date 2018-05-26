@@ -4,11 +4,11 @@
 #include <complex>
 
 
+#include "global_constants.h"
 #include "librtlsdr/include/rtl-sdr.h"
 #include "librtlsdr/src/convenience/convenience.h"
 
 
-#define SAMPLE_RATE 2048000
 #define GAIN 100
 #define BLOCK_SIZE 16*16384	//not less than 512
 
@@ -19,6 +19,8 @@ class T_rtlsdr {
 private:
 
 	rtlsdr_dev_t *dev = NULL;
+
+	uint32_t center_freq;
 
 	vector<uint8_t> current_samples;
 
@@ -39,7 +41,6 @@ private:
 			(last_samples[i]).imag( tmp_imag );
 		}
 
-		last_samples.shrink_to_fit();
 	}
 
 public:
@@ -51,7 +52,9 @@ public:
 	}
 
 	~T_rtlsdr() {
+
 		rtlsdr_close(dev);
+
 	}
 
 	void init() {
@@ -81,11 +84,21 @@ public:
 
 	}
 
-	void set_freq(int freq) {
-		verbose_set_frequency(dev, freq);
+	void set_freq(double freq) {
+
+		center_freq = (uint32_t)freq;
+		verbose_set_frequency(dev, (uint32_t)freq);
+
 	}
 
-	void get_samples(int n) {
+	double get_freq() {
+
+		return( (double)center_freq );
+
+	}
+
+	void get_samples() {
+
 		int samples_read = 0;
 		int totally_read = 0;
 		int stat;
@@ -93,7 +106,7 @@ public:
 		bool done = false;
 		void *buf;
 
-		n = 2 * n;	//need 2n real samples for n complex 
+		int n = 2 * fft_length;	//need 2n real samples for n complex ones
 
 		current_samples.clear();
 		current_samples.reserve(n);
